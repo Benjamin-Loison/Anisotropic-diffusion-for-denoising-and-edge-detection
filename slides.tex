@@ -1,0 +1,193 @@
+\documentclass[aspectratio=169,xcolor=dvipsnames]{beamer}
+\usetheme{SimplePlus}
+
+\usepackage{stmaryrd}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{booktabs}
+
+\title[short title]{Anisotropic diffusion for denoising and edge detection}
+
+\author[] {Benjamin Loison, Paul Robert}
+
+\date{January 18, 2022}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\begin{frame}{Goal}
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.15]  {brainArrow.png} % used to be brain
+\end{figure}
+    Removing noise by blurring only the irrelevant parts of the image
+\end{frame}
+
+\begin{frame}{Isotropic diffusion}
+
+    \begin{itemize}
+        \pause
+        \item Gaussian kernels is a way to denoise images 
+        \pause
+        \item $K_\sigma * I $
+        \pause 
+        \item solution to an heat equation
+        \pause
+        \item 
+    $\partial_t I = \Delta I \quad
+    I(x,0)=f(x)$
+        \pause
+        \item $I(x,t)=K_{\sqrt{2t}} * f(x)$  $(x>0)$  
+        \pause
+        \item Gaussian smooting equivalent to a diffusion process until $T= \sigma^2 / 2 $
+        \pause
+        \item independant of directions: edges are ignored 
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Anisotropic diffusion}
+    %\vspace*{-1.5cm}
+    \begin{itemize}
+        \pause
+        \item Causality criterion: any feature at a coarse level is the result of one at a finer level
+        \pause
+        \item Extremum principle: extremum only belong to the original image
+        \pause
+        \item Piecewise smoothing: smooth within regions, not across
+        \hspace*{-1cm}\includegraphics[width=15cm]{cleanTaj} % vertical space would be appreciated
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{An iterative process}
+    \centering
+    \includegraphics[width=7cm]{7}
+\end{frame}
+
+\begin{frame}{Relation to physics}
+    \begin{itemize}
+        \pause
+        \item Fick's law: $j = -D\cdot\nabla u$
+        \pause
+        \item Continuity equation: $\partial_t u = -\texttt{div } j$
+        \pause
+        \item $j$ expression changed in the continuity equation gives the heat equation: $\partial_t u = \texttt{div} (D\cdot\nabla u)$
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Perona and Malik's flux functions}
+    \begin{itemize}
+        \item Heat equation rewritten: $\partial_t I = \texttt{div} (c(x,y,t)\nabla I)$
+        \pause
+        \item Anisotropic diffusion equation: $\partial_t I = c(x, y, t)\Delta I+\nabla c\cdot\nabla I$\\(the case $c = 1$ is the isotropic case)
+        \pause
+        \item Flux functions:
+        \begin{itemize}
+            \item quadratic: $c(||\nabla I||) = \frac{1}{1+\left(\frac{||\nabla I||}{K}\right)^2}$
+            \item exponent: $c(||\nabla I||) = e^{-\left(\frac{||\nabla I||}{K}\right)^2}$
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Numerical methods}
+    Reminder of the anisotropic diffusion equation: $\partial_t I = c(x, y, t)\Delta I+\nabla c\cdot\nabla I$
+    \pause
+    \centering
+    $I_{i,j}^{t+1}=I_{i,j}^t + \lambda(c_N \cdot \triangledown_N I + c_S \cdot \triangledown_S I + c_E \cdot \triangledown_E I + c_W \cdot \triangledown_W I)_{i,j}^t$
+    
+    \pause
+    $$
+      \begin{split}
+        \triangledown_N I_{i,j} &= I_{i-1,j}-I_{i,j}\\
+        \triangledown_S I_{i,j} &= I_{i+1,j}-I_{i,j}\\
+        \triangledown_E I_{i,j} &= I_{i,j+1}-I_{i,j}\\
+        \triangledown_W I_{i,j} &= I_{i,j-1}-I_{i,j}
+      \end{split}
+    \quad\quad
+      \begin{split}
+        c_{N_{i,j}}^t &= g(||(\nabla I)_{i+\frac{1}{2},j}^t||)\\
+        c_{S_{i,j}}^t &= g(||(\nabla I)_{i-\frac{1}{2},j}^t||)\\
+        c_{E_{i,j}}^t &= g(||(\nabla I)_{i,j+\frac{1}{2}}^t||)\\
+        c_{W_{i,j}}^t &= g(||(\nabla I)_{i,j-\frac{1}{2}}^t||)
+      \end{split}$$
+      
+       $g$ the function such that $c(x,y,t)=g(I(x,y,t))$
+\end{frame}
+
+
+\begin{frame}{Comparison with Canny detector}
+    \centering
+    \includegraphics[width=14cm]{canny}
+\end{frame}
+
+\begin{frame}{Relation with Bilateral filter}
+\begin{itemize}
+    \item $BF[I](x)=\frac{1}{W_p}\sum_{x_i\in\Omega} I(x_i) G_R (I(x_i) - I(x)) G_S(x_i - x) $
+    \pause
+    \item $I^{t+1}(x) = \frac{\sum_{x_i\in \Omega}I(x_i)w^t(x,x_i)}{\sum_{x_i\in\Omega}w^t (x,x_i)}$
+    \pause
+    \item $w^t(x_i,x)=G_R(I(x_i) - I(x))G_S(x_i - x)$
+    \pause
+    \item $I^{t+1}(x)=\sum_{x_i\in\Omega}c(x,x_i,t)I(x_i)$ with $\sum c(x,x_i,t)=1$
+    \pause
+\end{itemize}
+    
+\end{frame}
+
+\begin{frame}{Relation with Bilateral filter}
+\begin{itemize}
+    \item 1-D case with $\Omega = \llbracket x-1;x+1\rrbracket$
+    \pause
+    \item $I^{t+1} - I^t(x) = c(x+1,t)(I^t(x+1) - I^t(x)) + c(x-1,t)(I^t(x-1) - I^t(x))$
+    \pause
+    \item Anisotropic diffusion equation: $\partial_t I =  \texttt{div} (c(x,t)\nabla I)$
+    \pause
+    \item $c(x_1,x_2)= \frac{w^t(x_1,x_2)}{W_p}=\lambda e^{-\left(\frac{||\nabla I||}{K}\right)^2}$ with $K = \sqrt{2}\sigma_R$
+    \pause
+    \item Anisotropic diffusion can be viewed as a particular case of bilateral filtering
+\end{itemize}
+    
+\end{frame}
+
+\begin{frame}{Conclusion}
+    \begin{itemize}
+        \item Anisotropic diffusion offers an edge sensitive noise reduction method 
+        \pause
+        \item Easy to understand, implement, and compute
+        \pause
+        \item Provides good results, but other methods exist 
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{References}
+    \footnotesize{
+        \begin{thebibliography}{99}
+            \bibitem[Smith, 2012]{p1} Pietro Perona and Jitendra Malik
+            \newblock Scale-Space and Edge Detection Using Anisotropic Diffusion
+            \newblock \emph{http://image.diku.dk/imagecanon/material/PeronaMalik1990.pdf}
+        \end{thebibliography}
+        \begin{thebibliography}{99}
+            \bibitem[Smith, 2012]{p1} Joachim Weickert
+            \newblock Anisotropic Diffusion in Image Processing
+            \newblock \emph{https://www.mia.uni-saarland.de/weickert/Papers/book.pdf}
+        \end{thebibliography}
+        \begin{thebibliography}{99}
+            \bibitem[Smith, 2012]{p1} Manasi Datar
+            \newblock Project 2: Anisotropic Diffusion
+            \newblock \emph{http://www.cs.utah.edu/\~manasi/coursework/cs7960/p2/project2.html}
+        \end{thebibliography}
+        \begin{thebibliography}{99}
+            \bibitem[Smith, 2012]{p1} Danny Barash
+            \newblock Bilateral Filtering and Anisotropic Diffusion: Towards a Unified Viewpoint
+            \newblock \emph{https://www.hpl.hp.com/techreports/2000/HPL-2000-18R1.pdf}
+        \end{thebibliography}
+    }
+\end{frame}
+
+\begin{frame}
+    \Huge{\centerline{\textbf{Any questions ?}}}
+\end{frame}
+
+\end{document}

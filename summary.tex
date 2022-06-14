@@ -1,0 +1,146 @@
+\documentclass{article}
+\usepackage{graphicx}
+\graphicspath{ {./} }
+\usepackage[utf8]{inputenc}
+%\usepackage[margin=2cm]{geometry}
+\usepackage[margin=1cm]{geometry}
+\newgeometry{margin=1cm,bottom=2cm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\title{Summary: Anisotropic diffusion for denoising and edge detection}
+\author{Benjamin Loison, Paul Robert}
+\date{January 2022}
+
+\begin{document}
+
+\maketitle
+
+\setlength{\parindent}{0cm}
+
+\section{Introduction}
+Anisotropic diffusion is a technique used to remove noises in images without removing the significant parts of the images (i.e edges). First we will introduce isotropic diffusion and its relations with Gaussian smoothing and the heat equation. Then we will do the same for anisotropic diffusion.
+
+\section{Isotropic diffusion}
+
+A standard way to denoise an image is to convolute it with a Gaussian kernel. We can then note that the Gaussian kernel is solution to the heat equation. Namely, the equation 
+\begin{equation}
+\begin{align*}
+    \partial_t I = \Delta I \\
+    I(x,0)=f(x)
+\end{align*}
+\end{equation}
+ (with $I$ the intensity of the grey scale image) has for solution : 
+ \begin{equation}
+ \begin{align*}
+ I(x,t) = 
+     \begin{cases}
+     f(x) & (t=0) \\
+     (K_{\sqrt{2t}} * f) (x) & (t>0)
+     \end{cases}
+ \end{align*}
+ \end{equation}
+$f$ is a bounded, continuous function and $K_\sigma$ denotes the Gaussian of width (standard deviation) $\sigma > 0$.\\ 
+Thus, convoluting an image with a Gaussian kernel is equivalent to solving the heat equation. However, this method blurs evenly all parts of the image, including the edges.\\
+This method is called isotropic diffusion, in the sense that the diffusion is independant of the gradient direction.
+\section{Anisotropic diffusion}
+
+In order to introduce anisotropic diffusion, we will compare it with the standard isotropic diffusion resulting from a Gaussian filter. To address the issues caused by this filter, Perone and Malik state that any feature at a coarse level of resolution should be the result of a feature at a finer level of resolution.\\
+This criterion leads to their anisotropic diffusion equation. They
+introduce flow functions as a way to constrain the diffusion process to regions of continuous homogeneity. They suggest two flux functions: quadratic and exponent:
+
+\setlength{\belowcaptionskip}{0.5cm}
+\begin{figure}[h]
+\caption{Comparison with Gaussian filter and both flux functions} % Taj Mahal % go deeper in details and equation would be nice at least for the slides
+\centering
+%\hspace*{-4cm}\includegraphics[width=20cm]{cleanTaj}
+%\hspace*{-1.3cm}\includegraphics[width=20cm]{cleanTaj}
+\hspace*{-0.3cm}\includegraphics[width=20cm]{cleanTaj}
+\end{figure}
+
+Anisotropic diffusion is usually implemented by an iterative process consisting of an approximation of the generalized diffusion equation at each time step. This iterative process is repeated as long as the image is not blurred enough.
+
+% linear: lines map to lines, points map to points, parallel lines stay parallel
+% space-invariant: invariant à l'échelle
+
+% This diffusion process is a linear and space-invariant transformation of the original image. Anisotropic diffusion is a generalization of this diffusion process: it produces a family of parameterized images, but each resulting image is a combination between the original image and a filter that depends on the local content of the original image. As a consequence, anisotropic diffusion is a non-linear and space-variant transformation of the original image.
+
+\section{Relation of anisotropic diffusion to physics}
+
+The diffusion process is intuitive in the sense that it seeks to balance the concentration of a physical quantity while respecting its conservation.
+
+This equilibration phenomenon can be expressed by Fick's law: \begin{equation}j = -D\cdot\nabla u\end{equation}
+
+This equation describes the fact that the concentration gradient $\nabla u$ involves a concentration flux $j$ which tries to compensate this gradient. $\nabla u$ and $j$ are related by the diffusion tensor $D$ which is a positive definite symmetric matrix. Furthermore when $j$ and $\nabla u$ are parallel, this factor can be replaced by a positive scalar value called diffusivity. % could talk about isotropic and anisotropic
+
+The fact that diffusion doesn't create or destroy any physical quantity but only transport it is expressed by the continuity equation: \begin{equation}\partial_t u = -\texttt{div } j\end{equation} % \frac{\partial u}{\partial t}
+
+By replacing $j$ according to Fick's law in the continuity equation we obtain the well-known heat equation: \begin{equation}\partial_t u = \texttt{div} (D\cdot\nabla u)\end{equation} % \frac{\partial u}{\partial t} could talk about homogenous and inhomogeneous and linear/non linear
+% homogenous: constant all over the image
+
+
+
+
+
+\section{Perona and Malik's flux functions}
+
+%The heat equation can be rewritten as: $\frac{\partial I}{\partial t} = \nabla^2 I = \frac{\partial^2 I}{\partial x^2}+\frac{\partial^2 I}{\partial y^2}$ with $I$ the intensity of the grey scale image.
+
+The heat equation can be rewritten as: \begin{equation}\partial_t I = \texttt{div} (c(x,y,t)\nabla I)\end{equation} % \frac{\partial I}{\partial t}
+
+We come about the anistropic diffusion equation: \begin{equation}\partial_t I = c(x, y, t)\Delta I+\nabla c\cdot\nabla I\end{equation} % \frac{\partial I}{\partial t}
+The case $c=1$ is the isotropic case.\\
+Perona and Malik suggest the two following flux functions called respectively quadratic and exponent:
+
+% could explain why these
+% could talk about wanted properties, how kept while discretizing...
+\begin{equation}c(||\nabla I||) = \frac{1}{1+\left(\frac{||\nabla I||}{K}\right)^2}\end{equation}\\
+\begin{equation}c(||\nabla I||) = e^{-\left(\frac{||\nabla I||}{K}\right)^2}\end{equation}
+
+An interesting point of this approach is that when approaching edges in the image, the flux function may trigger inverse diffusion and actually enhance the edges. Moreover we can notice that stronger edges last longer than weaker edges. A noticeable difference between these both flux functions is that in comparison with quadratic, the exponent one favors edge preservation over smoothing. Furthermore as $K$ is a great value, wider edges are preserved, while tight edges denoting detail are smoothed. % why ? greyscale image with raw values before and after would make it clear that it is the case then a "clean" way to show it would be nice with the equation
+
+% full Taj Mahal would be nice
+% discuss about K
+% implementing conclusion from webarchive may be interesting
+
+\section{Numerical methods}
+
+For a numerical implementation, we can note that in equation (7), $\partial_t I$ would be the difference of a greyscale pixel from an iteration of the algorithm to the other. This value can be computed by discretizing the Laplacian operator with its 4-nearest-neighbors: \begin{equation}I_{i,j}^{t+1}=I_{i,j}^t + \lambda(c_N \cdot \triangledown_N I + c_S \cdot \triangledown_S I + c_E \cdot \triangledown_E I + c_W \cdot \triangledown_W I)_{i,j}^t\end{equation}
+
+with $\lamba$ a real between 0 and $\frac{1}{4}$. $N, S, E, W$ denote North, South, East, West for the relative above, below, right and left pixel. $t$ denotes the $t$-th image of the iterative process. It is important to notice that the difference $\triangledown$ doesn't denote the gradient $\nabla$. More precisely:
+
+\begin{equation}
+  \begin{split}
+    \triangledown_N I_{i,j} &= I_{i-1,j}-I_{i,j}\\
+    \triangledown_S I_{i,j} &= I_{i+1,j}-I_{i,j}\\
+    \triangledown_E I_{i,j} &= I_{i,j+1}-I_{i,j}\\
+    \triangledown_W I_{i,j} &= I_{i,j-1}-I_{i,j}
+  \end{split}
+\quad\quad
+  \begin{split}
+    c_{N_{i,j}}^t &= g(||(\nabla I)_{i+\frac{1}{2},j}^t||)\\
+    c_{S_{i,j}}^t &= g(||(\nabla I)_{i-\frac{1}{2},j}^t||)\\
+    c_{E_{i,j}}^t &= g(||(\nabla I)_{i,j+\frac{1}{2}}^t||)\\
+    c_{W_{i,j}}^t &= g(||(\nabla I)_{i,j-\frac{1}{2}}^t||)
+  \end{split}
+\end{equation}
+
+with $\frac{1}{2}$ meaning the average of two neighboring pixels and $g$ the function such that $c(x,y,t)=g(I(x,y,t))$
+
+%\section{Anisotropic diffusion relation with the bilateral filter}
+
+%While anisotropic diffusion requires to choose an appropriate $K$ value, 
+%Both approaches consist in edge-preserving and noise-reducing smoothing filter for images. While anisotropic diffusion requires several iterations, the bilateral filter only requires one. Furthermore the bilateral filter isn't linked to any partial differential equation.
+
+%\section{Sources} % really necessary in the summary ?
+
+%Project 2: Anisotropic Diffusion, Manasi Datar, https://web.archive.org/web/20200429102559/http://www.cs.utah.edu:80/~manasi/coursework/cs7960/p2/project2.html
+% Anisotropic Diffusion in Image Processing, Joachim Weickert, https://www.mia.uni-saarland.de/weickert/Papers/book.pdf
+% Scale-Space and Edge Detection Using Anisotropic Diffusion, Pietro Perona and Jitendra Malik, http://image.diku.dk/imagecanon/material/PeronaMalik1990.pdf
+% Bilateral Filtering and Anisotropic Diffusion: Towards a Unified Viewpoint, Danny Barash, https://www.hpl.hp.com/techreports/2000/HPL-2000-18R1.pdf
+% Wikipedia, https://en.wikipedia.org/wiki/Anisotropic_diffusion
+
+% could precise editor like IEEE
+
+\end{document}
+

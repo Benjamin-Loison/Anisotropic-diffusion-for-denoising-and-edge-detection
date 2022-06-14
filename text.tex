@@ -1,0 +1,218 @@
+\documentclass{article}
+\usepackage{graphicx}
+\graphicspath{ {./} }
+\usepackage[utf8]{inputenc}
+%\usepackage[margin=2cm]{geometry}
+\usepackage[margin=1cm]{geometry}
+\newgeometry{margin=1cm,bottom=2cm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\title{Anisotropic diffusion for denoising and edge detection}
+\author{Benjamin Loison, Paul Robert}
+\date{January 2022}
+
+\begin{document}
+
+\maketitle
+
+\setlength{\parindent}{0cm}
+
+(slide)
+
+\section{Introduction}
+Anisotropic diffusion is a technique used to remove noises in images without removing the significant parts of the images (i.e edges).\\ % that are (is)
+%*describe brain image*\\ % cf 2 lines below, give details there if needed
+
+First we will introduce isotropic diffusion and its relation with Gaussian smoothing. Then we will introduce you anisotropic diffusion and its relation to physics. Then we will go deeper in the details of anisotropic diffusion. Finally we will briefly talk about possible implementations and we will compare with the Canny detector that we have done during a practicum.
+
+We may notice on this slide the fact that the anisotropic diffusion that we will introduce preserves tight edges that are meaningful.
+
+(slide)
+
+\section{Isotropic diffusion}
+
+% explain equations is important
+A standard way to denoise an image is to convolute it with a Gaussian kernel. We can then note that the Gaussian kernel is a solution to the heat equation. Namely, the equation 
+\begin{equation}
+\begin{align*}
+    \partial_t I = \Delta I \\
+    I(x,0)=f(x)
+\end{align*}
+\end{equation}
+ (with $I$ the intensity of the grey scale image) has for solution : 
+ \begin{equation}
+ \begin{align*}
+ I(x,t) = 
+     \begin{cases}
+     f(x) & (t=0) \\
+     (K_{\sqrt{2t}} * f) (x) & (t>0)
+     \end{cases}
+ \end{align*}
+ \end{equation}
+$f$ is a bounded, continuous function and $K_\sigma$ denotes the Gaussian of width (standard deviation) $\sigma > 0$.\\ 
+Thus, convoluting an image with a Gaussian kernel is equivalent to solving the heat equation. However, this method blurs evenly all parts of the image, including the edges.\\
+This method is called isotropic diffusion, in the sense that the diffusion is independant of the gradient direction.
+
+(slide)
+
+\section{Anisotropic diffusion}
+
+In order to introduce anisotropic diffusion, we will compare it with the standard isotropic diffusion resulting from a Gaussian filter.
+
+(slide)
+
+To address the issues caused by this filter, Perone and Malik state the causality criterion that states that any feature at a coarse level of resolution should be the result of a feature at a finer level of resolution. This criterion leads to their anisotropic diffusion equation.\\
+
+(slide)
+
+Furthermore the anisotropic diffusion respects the maximum principle which states that maxima only belong to the original image. The same comment can be done for miniums.
+
+(slide)
+
+Perone and Malik introduce flow functions as a way to constrain the diffusion process to regions of continuous homogeneity. This is done in order to encourage smoothing within a region in preference to smoothing across the boundaries, this criterion called piecewise smoothing makes the Taj Mahal's wall carvings fade away while the global semantical building structure of the Taj Mahal remain clear and sharped.
+
+Perone and Malik suggest two flux functions: quadratic and exponent:
+
+%\setlength{\belowcaptionskip}{0.5cm}
+%\begin{figure}[h]
+%\caption{Comparison with Gaussian filter and both flux functions} % Taj Mahal % go deeper in details and equation would be nice at least for the slides
+%\centering
+%\hspace*{-4cm}\includegraphics[width=20cm]{cleanTaj}
+%\hspace*{-1.3cm}\includegraphics[width=20cm]{cleanTaj}
+%\hspace*{-0.3cm}\includegraphics[width=20cm]{cleanTaj}
+%\end{figure}
+
+(slide)
+
+Anisotropic diffusion is usually implemented by an iterative process consisting of an approximation of the generalized diffusion equation at each time step. This iterative process is repeated as long as the image is not blurred enough.
+Here $t$ denotes the number of iterations.
+
+(slide)
+
+% linear: lines map to lines, points map to points, parallel lines stay parallel
+% space-invariant: invariant at local scale
+
+% This diffusion process is a linear and space-invariant transformation of the original image. Anisotropic diffusion is a generalization of this diffusion process: it produces a family of parameterized images, but each resulting image is a combination between the original image and a filter that depends on the local content of the original image. As a consequence, anisotropic diffusion is a non-linear and space-variant transformation of the original image.
+
+\section{Relation of anisotropic diffusion to physics}
+
+The diffusion process is intuitive in the sense that it seeks to balance the concentration of a physical quantity while respecting its conservation. Here pixel intensities are analogous to heat and is at the same time a kind of physical quantity.
+
+(slide)
+This equilibration phenomenon can be expressed by Fick's law.%: \begin{equation}j = -D\cdot\nabla u\end{equation}
+
+This equation describes the fact that the concentration gradient $\nabla u$ involves a concentration flux $j$ which tries to compensate this gradient. $\nabla u$ and $j$ are related by the diffusion tensor $D$ which is a positive definite symmetric matrix. Furthermore when $j$ and $\nabla u$ are parallel, this factor can be replaced by a positive scalar value called diffusivity. % could talk about isotropic and anisotropic
+
+(slide)
+
+The fact that diffusion doesn't create or destroy any physical quantity but only transport it is expressed by the continuity equation, that we saw in classe préparatoire.%: \begin{equation}\partial_t u = -\texttt{div } j\end{equation} % \frac{\partial u}{\partial t} % proof done in Classe Préparatoire aux Grandes Écoles
+
+(slide)
+
+By replacing $j$ according to Fick's law in the continuity equation we obtain the well-known heat equation, that we also saw in classe préparatoire.%: \begin{equation}\partial_t u = \texttt{div} (D\cdot\nabla u)\end{equation} % \frac{\partial u}{\partial t} could talk about homogenous and inhomogeneous and linear/non linear
+% homogenous: constant all over the image
+
+(slide)
+
+\section{Perona and Malik's flux functions}
+
+%The heat equation can be rewritten as: $\frac{\partial I}{\partial t} = \nabla^2 I = \frac{\partial^2 I}{\partial x^2}+\frac{\partial^2 I}{\partial y^2}$ with $I$ the intensity of the grey scale image.
+
+The heat equation can be rewritten like this.%: \begin{equation}\partial_t I = \texttt{div} (c(x,y,t)\nabla I)\end{equation} % \frac{\partial I}{\partial t}
+
+(slide)
+
+We come about the anistropic diffusion equation with a bit of calculus.%: \begin{equation}\partial_t I = c(x, y, t)\Delta I+\nabla c\cdot\nabla I\end{equation} % \frac{\partial I}{\partial t}
+The case $c=1$ is the isotropic case. The idea is that even if we don't know in advance the region boundaries at each scale, otherwise the problem would be solved, we can compute an estimation of the location of the edges for current scale. Indeed $\Delta I$ is such an accurate estimate because if $\nabla I$ has an absolute great value in a direction, we can guess than there might be an edge with studied pixels.\\
+The concept in the anisotropic diffusion equation is to force the value of $c$ to 1 when $x, y$ denotes an homogenous region while $c$ should be null when we are on an edge.
+
+(slide)
+
+Both flux functions, called respectively quadratic and exponent, suggested by Perona and Malik, give exactly this desired result. Indeed if the gradient $\nabla I$ is high, $g$ becomes close to 0 otherwise it becomes close to 1.%:\\ % following
+
+% could explain why these
+% could talk about wanted properties, how kept while discretizing...
+%\begin{equation}c(||\nabla I||) = \frac{1}{1+\left(\frac{||\nabla I||}{K}\right)^2}\end{equation}\\
+%\begin{equation}c(||\nabla I||) = e^{-\left(\frac{||\nabla I||}{K}\right)^2}\end{equation}
+
+An interesting point of this approach is that when approaching edges in the image, the flux function may trigger inverse diffusion and actually enhance the edges while the Gaussian filter diffuses the edges of the image, this semantically logical criterion is called immediate localization. Moreover we can notice that stronger edges last longer than weaker edges. A noticeable difference between these both flux functions is that the quadratic one favors high-contrast edges over low-contrast ones and the exponent one privileges wide regions over smaller ones. Furthermore as $K$ is a great value, wider edges are preserved, while tight edges denoting details are smoothed. % why ? greyscale image with raw values before and after would make it clear that it is the case then a "clean" way to show it would be nice with the equation
+
+% full Taj Mahal would be nice
+% discuss about K
+% implementing conclusion from WebArchive may be interesting
+
+$K$ can be fixed by hand at some constant value or we can use a noise estimator, based on RGB channels corrolation for instance, or we can use an histogram of the absolute values of the gradient throughout the image was computed. % source for RGB: https://arxiv.org/pdf/1904.02566.pdf
+
+\section{Numerical methods}
+
+(slide)
+
+% The partial derivative of I with respect to t
+For a numerical implementation, we can note that in the anisotropic diffusion equation, $\partial_t I$ would be the difference of a greyscale pixel from an iteration of the algorithm to the other. Furthermore we can notice in the anisotropic diffusion equation that the product of $\nabla c \cdot \nabla I$ is insignificant in comparaison with $c(x,y,t)\Delta I$ because $\nabla c$ and $\nabla I$ are both small values. This value can be computed by discretizing the Laplacian operator with its 4-nearest-neighbors:
+
+(slide)
+
+%\begin{equation}I_{i,j}^{t+1}=I_{i,j}^t + \lambda(c_N \cdot \triangledown_N I + c_S \cdot \triangledown_S I + c_E \cdot \triangledown_E I + c_W \cdot \triangledown_W I)_{i,j}^t\end{equation}
+
+with $\lambda$ a real between 0 and $\frac{1}{4}$ because it is multiplied by 4 values where $c$ factors are between 0 and 1. $N, S, E, W$ denote North, South, East, West for the relative above, below, right and left pixel. $t$ denotes the $t$-th image of the iterative process. It is important to notice that the difference $\triangledown$ doesn't denote the gradient $\nabla$. More precisely:
+
+(slide)
+
+%\begin{equation}
+%  \begin{split}
+%    \triangledown_N I_{i,j} &= I_{i-1,j}-I_{i,j}\\
+%    \triangledown_S I_{i,j} &= I_{i+1,j}-I_{i,j}\\
+%    \triangledown_E I_{i,j} &= I_{i,j+1}-I_{i,j}\\
+%    \triangledown_W I_{i,j} &= I_{i,j-1}-I_{i,j}
+%  \end{split}
+%\quad\quad
+%  \begin{split}
+%    c_{N_{i,j}}^t &= g(||(\nabla I)_{i+\frac{1}{2},j}^t||)\\
+%    c_{S_{i,j}}^t &= g(||(\nabla I)_{i-\frac{1}{2},j}^t||)\\
+%    c_{E_{i,j}}^t &= g(||(\nabla I)_{i,j+\frac{1}{2}}^t||)\\
+%    c_{W_{i,j}}^t &= g(||(\nabla I)_{i,j-\frac{1}{2}}^t||)
+%  \end{split}
+%\end{equation}
+
+with $\frac{1}{2}$ meaning the average of two neighboring pixels and $g$ the function such that $c(x,y,t)=g(I(x,y,t))$
+
+At the image borders we force the conduction coefficient to zero in order to have stability while iterating because this is similar to physical experiment in abatic conditions.
+
+The interest of this numerical method is that it gives good results while it is logically not complex and is easily parallelizable.
+
+% could make the proof about $(I_m)_{i,j}^t \leq I_{i,j}^{t+1} \leq (I_M)_{i,j}^t$
+
+(slide)
+
+\section{Comparison with Canny detector}
+
+In comparison with the Canny detector which distords the edges, anisotropic diffusion don't have this problem. On these images, from top left to bottom right both algorithms give more and more everything they have.
+
+(slide)
+
+If the references used for this presentation interest someone, here they are.
+
+(slide)
+
+Otherwise I would ask you whether or not you have any question.
+
+% IMAGE p 636
+
+%\section{Anisotropic diffusion relation with the bilateral filter}
+
+%While anisotropic diffusion requires to choose an appropriate $K$ value, 
+%Both approaches consist in edge-preserving and noise-reducing smoothing filter for images. While anisotropic diffusion requires several iterations, the bilateral filter only requires one. Furthermore the bilateral filter isn't linked to any partial differential equation.
+
+%\section{Sources} % really necessary in the summary ?
+
+%Project 2: Anisotropic Diffusion, Manasi Datar, https://web.archive.org/web/20200429102559/http://www.cs.utah.edu:80/~manasi/coursework/cs7960/p2/project2.html
+% Anisotropic Diffusion in Image Processing, Joachim Weickert, https://www.mia.uni-saarland.de/weickert/Papers/book.pdf
+% Scale-Space and Edge Detection Using Anisotropic Diffusion, Pietro Perona and Jitendra Malik, http://image.diku.dk/imagecanon/material/PeronaMalik1990.pdf
+% Bilateral Filtering and Anisotropic Diffusion: Towards a Unified Viewpoint, Danny Barash, https://www.hpl.hp.com/techreports/2000/HPL-2000-18R1.pdf
+% Wikipedia, https://en.wikipedia.org/wiki/Anisotropic_diffusion
+
+% could precise editor like IEEE
+
+\end{document}
+
